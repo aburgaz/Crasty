@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Crasty</string>
+
+    <string name="tab_today">Hoy</string>
+    <string name="tab_tomorrow">Mañana</string>
+    <string name="tab_calendar">Calendario</string>
+    <string name="settings">Ajustes</string>
+    <string name="back">Volver</string>
+
+    <string name="empty_day">Nada por aquí 🦥</string>
+    <string name="new_task">Nueva tarea</string>
+    <string name="edit_task">Editar tarea</string>
+    <string name="procrastinate">Procrastinar</string>
+    <string name="delete">Eliminar</string>
+    <string name="save">Guardar</string>
+    <string name="field_title">Tarea</string>
+    <string name="field_notes">Notas</string>
+    <string name="no_reminder">Sin recordatorio</string>
+    <string name="remove_reminder">Quitar recordatorio</string>
+
+    <string name="export_tasks">Exportar tareas</string>
+    <string name="export_description">Guarda todas las tareas en un archivo JSON</string>
+    <string name="import_tasks">Importar tareas</string>
+    <string name="import_description">Carga las tareas desde un archivo exportado</string>
+    <string name="import_confirm">Se sustituirán TODAS las tareas actuales por las del archivo. ¿Continuar?</string>
+    <string name="export_done">%d tareas exportadas</string>
+    <string name="import_done">%d tareas importadas</string>
+    <string name="backup_error">No se pudo completar la operación</string>
+
+    <string name="reminder_channel_name">Recordatorios</string>
+    <string name="reminder_channel_description">Avisos de tareas a la hora indicada</string>
+</resources>

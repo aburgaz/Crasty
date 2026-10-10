@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- El tema real lo define Compose (ui/theme). Este solo cubre la ventana al arrancar. -->
+    <style name="Theme.Crasty" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
