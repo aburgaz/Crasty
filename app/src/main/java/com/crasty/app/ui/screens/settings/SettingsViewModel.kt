@@ -9,7 +9,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.crasty.app.data.backup.BackupManager
+import com.crasty.app.data.settings.SettingsRepository
+import com.crasty.app.data.settings.ThemeMode
 import com.crasty.app.di.appContainer
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed interface BackupResult {
@@ -18,10 +21,17 @@ sealed interface BackupResult {
     data object Failed : BackupResult
 }
 
-class SettingsViewModel(private val backupManager: BackupManager) : ViewModel() {
+class SettingsViewModel(
+    private val backupManager: BackupManager,
+    private val settings: SettingsRepository,
+) : ViewModel() {
+
+    val themeMode: StateFlow<ThemeMode> = settings.themeMode
 
     var result by mutableStateOf<BackupResult?>(null)
         private set
+
+    fun setThemeMode(mode: ThemeMode) = settings.setThemeMode(mode)
 
     fun export(uri: Uri) {
         viewModelScope.launch {
@@ -43,7 +53,10 @@ class SettingsViewModel(private val backupManager: BackupManager) : ViewModel() 
 
     companion object {
         val Factory = viewModelFactory {
-            initializer { SettingsViewModel(appContainer().backupManager) }
+            initializer {
+                val container = appContainer()
+                SettingsViewModel(container.backupManager, container.settingsRepository)
+            }
         }
     }
 }

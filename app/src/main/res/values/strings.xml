@@ -4,26 +4,96 @@
 
     <string name="tab_today">Hoy</string>
     <string name="tab_tomorrow">Mañana</string>
-    <string name="tab_calendar">Calendario</string>
+    <string name="calendar">Calendario</string>
+    <string name="completed_tasks">Completadas</string>
+    <string name="projects">Proyectos</string>
     <string name="settings">Ajustes</string>
     <string name="back">Volver</string>
 
-    <string name="empty_day">Nada por aquí 🦥</string>
+    <!-- Tareas -->
+    <string name="empty_day">Nada por aquí</string>
     <string name="new_task">Nueva tarea</string>
     <string name="edit_task">Editar tarea</string>
-    <string name="procrastinate">Procrastinar</string>
     <string name="delete">Eliminar</string>
     <string name="save">Guardar</string>
     <string name="field_title">Tarea</string>
     <string name="field_notes">Notas</string>
     <string name="no_reminder">Sin recordatorio</string>
     <string name="remove_reminder">Quitar recordatorio</string>
+    <string name="starts_on">Desde el %s</string>
+    <string name="task_project">%1$s · hasta %2$s</string>
+    <string name="error_after_deadline">Debe ser antes de la fecha límite del proyecto (%s)</string>
 
+    <!-- Tareas recurrentes -->
+    <string name="repeat">Repetir</string>
+    <string name="repeat_every">Cada</string>
+    <plurals name="unit_days">
+        <item quantity="one">día</item>
+        <item quantity="other">días</item>
+    </plurals>
+    <plurals name="unit_weeks">
+        <item quantity="one">semana</item>
+        <item quantity="other">semanas</item>
+    </plurals>
+    <plurals name="unit_months">
+        <item quantity="one">mes</item>
+        <item quantity="other">meses</item>
+    </plurals>
+    <plurals name="every_n_days">
+        <item quantity="one">Cada día</item>
+        <item quantity="other">Cada %d días</item>
+    </plurals>
+    <plurals name="every_n_weeks">
+        <item quantity="one">Cada semana</item>
+        <item quantity="other">Cada %d semanas</item>
+    </plurals>
+    <plurals name="every_n_months">
+        <item quantity="one">Cada mes</item>
+        <item quantity="other">Cada %d meses</item>
+    </plurals>
+
+    <!-- Completadas -->
+    <string name="empty_completed">No hay tareas completadas este mes</string>
+    <string name="previous_month">Mes anterior</string>
+    <string name="next_month">Mes siguiente</string>
+    <string name="previous_year">Año anterior</string>
+    <string name="next_year">Año siguiente</string>
+
+    <!-- Proyectos -->
+    <string name="new_project">Nuevo proyecto</string>
+    <string name="edit_project">Editar proyecto</string>
+    <string name="delete_project">Eliminar proyecto</string>
+    <string name="projects_in_progress">En curso</string>
+    <string name="projects_completed">Completados</string>
+    <string name="empty_projects">No hay proyectos</string>
+    <string name="empty_project">Este proyecto no tiene tareas</string>
+    <string name="field_project_name">Nombre del proyecto</string>
+    <string name="field_deadline">Fecha límite</string>
+    <string name="project_summary">Hasta %1$s · %2$d/%3$d tareas</string>
+    <string name="project_deadline">Fecha límite: %s</string>
+    <string name="project_progress">%1$d de %2$d tareas completadas</string>
+    <string name="complete_project">Marcar proyecto como completado</string>
+    <string name="reopen_project">Volver a poner en curso</string>
+    <plurals name="delete_project_confirm">
+        <item quantity="one">Se eliminará el proyecto y su tarea.</item>
+        <item quantity="other">Se eliminará el proyecto y sus %d tareas.</item>
+    </plurals>
+    <plurals name="error_deadline_conflicts">
+        <item quantity="one">Hay %d tarea pendiente después de esa fecha. Cámbiala antes.</item>
+        <item quantity="other">Hay %d tareas pendientes después de esa fecha. Cámbialas antes.</item>
+    </plurals>
+
+    <!-- Ajustes -->
+    <string name="appearance">Apariencia</string>
+    <string name="theme_system">Según el sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="backup">Copia de seguridad</string>
     <string name="export_tasks">Exportar tareas</string>
-    <string name="export_description">Guarda todas las tareas en un archivo JSON</string>
+    <string name="export_description">Guarda tareas y proyectos en un archivo JSON</string>
     <string name="import_tasks">Importar tareas</string>
-    <string name="import_description">Carga las tareas desde un archivo exportado</string>
-    <string name="import_confirm">Se sustituirán TODAS las tareas actuales por las del archivo. ¿Continuar?</string>
+    <string name="import_description">Carga tareas y proyectos desde un archivo exportado</string>
+    <string name="import_confirm">Se sustituirán TODAS las tareas y proyectos actuales por los del archivo. ¿Continuar?</string>
     <string name="export_done">%d tareas exportadas</string>
     <string name="import_done">%d tareas importadas</string>
     <string name="backup_error">No se pudo completar la operación</string>

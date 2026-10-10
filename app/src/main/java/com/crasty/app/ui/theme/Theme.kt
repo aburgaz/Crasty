@@ -1,6 +1,5 @@
 package com.crasty.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -10,7 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 /** Usa los colores dinámicos del sistema (Material You). Se personalizará al diseñar la interfaz. */
 @Composable
 fun CrastyTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current

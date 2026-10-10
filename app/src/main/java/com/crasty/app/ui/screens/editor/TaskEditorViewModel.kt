@@ -7,8 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.crasty.app.data.repository.TaskAfterDeadlineException
 import com.crasty.app.data.repository.TaskRepository
 import com.crasty.app.di.appContainer
+import com.crasty.app.domain.model.Project
+import com.crasty.app.domain.model.Recurrence
+import com.crasty.app.domain.model.RepeatUnit
 import com.crasty.app.domain.model.Task
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -20,12 +24,26 @@ data class EditorState(
     val date: LocalDate,
     val reminderTime: LocalTime? = null,
     val isNew: Boolean = true,
-)
+    val project: Project? = null,
+    val repeat: Boolean = false,
+    val repeatInterval: Int = 1,
+    val repeatUnit: RepeatUnit = RepeatUnit.DAYS,
+) {
+    /** Las tareas de un proyecto no pueden ser recurrentes. */
+    val canRepeat: Boolean get() = project == null
 
-/** Crear (taskId = 0) o editar una tarea. */
+    val recurrence: Recurrence? get() = if (repeat && canRepeat) Recurrence(repeatInterval, repeatUnit) else null
+
+    /** La fecha/hora elegida cae después de la fecha límite del proyecto. */
+    val violatesDeadline: Boolean
+        get() = project != null && !Task(title = title, date = date, reminderTime = reminderTime).fitsBefore(project.deadline)
+}
+
+/** Crear (taskId = 0) o editar una tarea. projectId = 0: sin proyecto. */
 class TaskEditorViewModel(
     taskId: Long,
     initialDate: LocalDate,
+    projectId: Long,
     private val repository: TaskRepository,
 ) : ViewModel() {
 
@@ -35,12 +53,24 @@ class TaskEditorViewModel(
         private set
 
     init {
-        if (taskId != 0L) {
-            viewModelScope.launch {
-                repository.get(taskId)?.let {
-                    original = it
-                    state = EditorState(it.title, it.notes, it.date, it.reminderTime, isNew = false)
-                }
+        viewModelScope.launch {
+            val task = if (taskId != 0L) repository.get(taskId) else null
+            original = task
+            val project = (task?.projectId ?: projectId.takeIf { it != 0L })?.let { repository.getProject(it) }
+            state = if (task == null) {
+                state.copy(project = project)
+            } else {
+                EditorState(
+                    title = task.title,
+                    notes = task.notes,
+                    date = task.date,
+                    reminderTime = task.reminderTime,
+                    isNew = false,
+                    project = project,
+                    repeat = task.isRecurring,
+                    repeatInterval = task.recurrence?.interval ?: 1,
+                    repeatUnit = task.recurrence?.unit ?: RepeatUnit.DAYS,
+                )
             }
         }
     }
@@ -49,20 +79,32 @@ class TaskEditorViewModel(
     fun onNotesChange(value: String) { state = state.copy(notes = value) }
     fun onDateChange(value: LocalDate) { state = state.copy(date = value) }
     fun onReminderChange(value: LocalTime?) { state = state.copy(reminderTime = value) }
+    fun onRepeatChange(value: Boolean) { state = state.copy(repeat = value) }
+    fun onRepeatIntervalChange(value: Int) { state = state.copy(repeatInterval = value.coerceIn(1, 99)) }
+    fun onRepeatUnitChange(value: RepeatUnit) { state = state.copy(repeatUnit = value) }
 
     fun save(onDone: () -> Unit) {
-        if (state.title.isBlank()) return
+        if (state.title.isBlank() || state.violatesDeadline) return
         viewModelScope.launch {
             val base = original ?: Task(title = "", date = state.date)
-            repository.save(
-                base.copy(
-                    title = state.title.trim(),
-                    notes = state.notes.trim(),
-                    date = state.date,
-                    reminderTime = state.reminderTime,
-                ),
-            )
-            onDone()
+            val recurrence = state.recurrence
+            try {
+                repository.save(
+                    base.copy(
+                        title = state.title.trim(),
+                        notes = state.notes.trim(),
+                        date = state.date,
+                        reminderTime = state.reminderTime,
+                        projectId = state.project?.id,
+                        recurrence = recurrence,
+                        // Una recurrente se completa por días, no como un todo.
+                        isCompleted = base.isCompleted && recurrence == null,
+                    ),
+                )
+                onDone()
+            } catch (_: TaskAfterDeadlineException) {
+                // violatesDeadline ya lo muestra en pantalla.
+            }
         }
     }
 
@@ -75,8 +117,8 @@ class TaskEditorViewModel(
     }
 
     companion object {
-        fun factory(taskId: Long, initialDate: LocalDate) = viewModelFactory {
-            initializer { TaskEditorViewModel(taskId, initialDate, appContainer().taskRepository) }
+        fun factory(taskId: Long, initialDate: LocalDate, projectId: Long) = viewModelFactory {
+            initializer { TaskEditorViewModel(taskId, initialDate, projectId, appContainer().taskRepository) }
         }
     }
 }

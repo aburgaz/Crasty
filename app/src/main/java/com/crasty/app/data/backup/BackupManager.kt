@@ -9,30 +9,33 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 
 /**
- * Exporta/importa todas las tareas a un archivo JSON elegido por el usuario
- * (Storage Access Framework). Sirve para pasar las tareas a otro móvil sin internet.
+ * Exporta/importa tareas y proyectos a un archivo JSON elegido por el usuario
+ * (Storage Access Framework). Sirve para pasarlos a otro móvil sin internet.
  */
 class BackupManager(
     private val context: Context,
     private val repository: TaskRepository,
 ) {
-    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     /** Devuelve el número de tareas exportadas. */
     suspend fun export(uri: Uri): Int = withContext(Dispatchers.IO) {
-        val tasks = repository.getAll()
-        val file = BackupFile(exportedAt = Instant.now().toString(), tasks = tasks.map { it.toBackup() })
+        val file = repository.snapshot().toBackup(Instant.now())
         context.contentResolver.openOutputStream(uri, "wt")!!.use {
             it.write(json.encodeToString(BackupFile.serializer(), file).toByteArray())
         }
-        tasks.size
+        file.tasks.size
     }
 
-    /** Sustituye todas las tareas actuales por las del archivo. Devuelve cuántas se importaron. */
+    /** Sustituye todo lo actual por el contenido del archivo. Devuelve cuántas tareas se importaron. */
     suspend fun import(uri: Uri): Int = withContext(Dispatchers.IO) {
         val text = context.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }
         val file = json.decodeFromString(BackupFile.serializer(), text)
-        repository.replaceAll(file.tasks.map { it.toTask() })
+        repository.replaceAll(file.toSnapshot())
         file.tasks.size
     }
 }

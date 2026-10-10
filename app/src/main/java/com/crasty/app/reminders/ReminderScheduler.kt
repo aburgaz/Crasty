@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.crasty.app.domain.model.Task
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -13,15 +12,14 @@ class ReminderScheduler(private val context: Context) {
 
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
-    /** Programa o cancela el recordatorio según el estado actual de la tarea. */
-    fun sync(task: Task) {
-        val at = task.reminderAt
-        if (task.isCompleted || at == null || at.isBefore(LocalDateTime.now())) {
-            cancel(task.id)
+    /** Programa el recordatorio de la tarea para [at], o lo cancela si es null. */
+    fun schedule(taskId: Long, title: String, at: LocalDateTime?) {
+        if (at == null) {
+            cancel(taskId)
             return
         }
         val millis = at.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val intent = pendingIntent(task.id, task.title)
+        val intent = pendingIntent(taskId, title)
         if (alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, millis, intent)
         } else {

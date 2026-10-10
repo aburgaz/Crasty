@@ -7,14 +7,16 @@ import com.crasty.app.CrastyApp
 import com.crasty.app.data.backup.BackupManager
 import com.crasty.app.data.local.CrastyDatabase
 import com.crasty.app.data.repository.TaskRepository
+import com.crasty.app.data.settings.SettingsRepository
 import com.crasty.app.reminders.ReminderScheduler
 
 /** Inyección de dependencias manual: suficiente para una app de este tamaño (sin Hilt). */
 class AppContainer(context: Context) {
     private val database = CrastyDatabase.create(context)
     private val reminderScheduler = ReminderScheduler(context)
-    val taskRepository = TaskRepository(database.taskDao(), reminderScheduler)
+    val taskRepository = TaskRepository(database, reminderScheduler)
     val backupManager = BackupManager(context, taskRepository)
+    val settingsRepository = SettingsRepository(context)
 }
 
 /** Acceso al contenedor desde las factorías de ViewModel. */

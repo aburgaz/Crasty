@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.FileDownload
@@ -14,6 +15,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -29,11 +32,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crasty.app.R
+import com.crasty.app.data.settings.ThemeMode
 import java.time.LocalDate
 
-/** Ajustes. De momento: exportar/importar tareas para pasarlas a otro móvil. */
+/** Ajustes: tema (claro/oscuro) y exportar/importar para pasar los datos a otro móvil. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -41,6 +48,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val context = LocalContext.current
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmImport by remember { mutableStateOf(false) }
 
@@ -76,6 +84,30 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(Modifier.padding(padding)) {
+            SectionHeader(stringResource(R.string.appearance))
+            ThemeMode.entries.forEach { mode ->
+                ListItem(
+                    modifier = Modifier.selectable(
+                        selected = mode == themeMode,
+                        role = Role.RadioButton,
+                        onClick = { viewModel.setThemeMode(mode) },
+                    ),
+                    leadingContent = { RadioButton(selected = mode == themeMode, onClick = null) },
+                    headlineContent = {
+                        Text(
+                            stringResource(
+                                when (mode) {
+                                    ThemeMode.SYSTEM -> R.string.theme_system
+                                    ThemeMode.LIGHT -> R.string.theme_light
+                                    ThemeMode.DARK -> R.string.theme_dark
+                                },
+                            ),
+                        )
+                    },
+                )
+            }
+
+            SectionHeader(stringResource(R.string.backup))
             ListItem(
                 modifier = Modifier.clickable { exportLauncher.launch("crasty-${LocalDate.now()}.json") },
                 leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null) },
@@ -107,4 +139,14 @@ fun SettingsScreen(
             },
         )
     }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
 }

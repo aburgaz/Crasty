@@ -9,19 +9,38 @@ import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.crasty.app.CrastyApp
 import com.crasty.app.MainActivity
 import com.crasty.app.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-/** Muestra la notificación cuando salta la alarma de una tarea. */
+/** Muestra la notificación cuando salta la alarma de una tarea y programa la siguiente si es recurrente. */
 class ReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val taskId = intent.getLongExtra(EXTRA_TASK_ID, 0L)
         val title = intent.getStringExtra(EXTRA_TITLE) ?: return
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) return
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            showNotification(context, taskId, title)
+        }
 
+        val pending = goAsync()
+        val repository = (context.applicationContext as CrastyApp).container.taskRepository
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                repository.refreshReminder(taskId)
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    @Suppress("MissingPermission") // Comprobado antes de llamar.
+    private fun showNotification(context: Context, taskId: Long, title: String) {
         val openApp = PendingIntent.getActivity(
             context,
             taskId.toInt(),

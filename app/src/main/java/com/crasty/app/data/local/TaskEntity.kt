@@ -3,12 +3,14 @@ package com.crasty.app.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.crasty.app.domain.model.Recurrence
+import com.crasty.app.domain.model.RepeatUnit
 import com.crasty.app.domain.model.Task
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
-@Entity(tableName = "tasks", indices = [Index("dateEpochDay")])
+@Entity(tableName = "tasks", indices = [Index("dateEpochDay"), Index("projectId")])
 data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
@@ -18,6 +20,11 @@ data class TaskEntity(
     val isCompleted: Boolean,
     val postponedCount: Int,
     val createdAtMillis: Long,
+    val projectId: Long? = null,
+    val repeatInterval: Int? = null,
+    /** Nombre de [RepeatUnit]; null = tarea normal. */
+    val repeatUnit: String? = null,
+    val completedEpochDay: Long? = null,
 )
 
 fun TaskEntity.toTask() = Task(
@@ -29,6 +36,9 @@ fun TaskEntity.toTask() = Task(
     isCompleted = isCompleted,
     postponedCount = postponedCount,
     createdAt = Instant.ofEpochMilli(createdAtMillis),
+    projectId = projectId,
+    recurrence = repeatUnit?.let { Recurrence(repeatInterval ?: 1, RepeatUnit.valueOf(it)) },
+    completedOn = completedEpochDay?.let(LocalDate::ofEpochDay),
 )
 
 fun Task.toEntity() = TaskEntity(
@@ -40,4 +50,8 @@ fun Task.toEntity() = TaskEntity(
     isCompleted = isCompleted,
     postponedCount = postponedCount,
     createdAtMillis = createdAt.toEpochMilli(),
+    projectId = projectId,
+    repeatInterval = recurrence?.interval,
+    repeatUnit = recurrence?.unit?.name,
+    completedEpochDay = completedOn?.toEpochDay(),
 )
