@@ -1,18 +1,17 @@
 package com.crasty.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
-/** Usa los colores dinámicos del sistema (Material You). Se personalizará al diseñar la interfaz. */
+/** Tema propio (sin colores dinámicos) para controlar el contraste entre fondo y tarjetas. */
 @Composable
 fun CrastyTheme(
     darkTheme: Boolean,
     content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val colorScheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    MaterialTheme(colorScheme = colorScheme, content = content)
+    MaterialTheme(
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = CrastyTypography,
+        content = content,
+    )
 }

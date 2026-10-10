@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -20,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -40,6 +42,7 @@ import com.crasty.app.domain.model.Task
 import com.crasty.app.ui.components.DeadlineErrorEffect
 import com.crasty.app.ui.components.TaskList
 import com.crasty.app.ui.components.dateTimeFormatter
+import com.crasty.app.ui.theme.TaskColors
 
 /** Un proyecto: sus tareas, y editar / borrar / completar el proyecto. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,24 +90,45 @@ fun ProjectDetailScreen(
         val current = project ?: return@Scaffold
         val done = tasks.count { it.isCompleted }
         Column(Modifier.padding(padding)) {
-            Column(
+            // Cabecera del proyecto en una tarjeta de su color.
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = TaskColors.project(current.colorIndex).resolve(),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    stringResource(R.string.project_deadline, current.deadline.format(dateTimeFormatter)),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    stringResource(R.string.project_progress, done, tasks.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                LinearProgressIndicator(
-                    progress = { if (tasks.isEmpty()) 0f else done.toFloat() / tasks.size },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedButton(onClick = viewModel::toggleProjectCompleted, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(if (current.isCompleted) R.string.reopen_project else R.string.complete_project))
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.project_deadline, current.deadline.format(dateTimeFormatter)),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        stringResource(R.string.project_progress, done, tasks.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    LinearProgressIndicator(
+                        progress = { if (tasks.isEmpty()) 0f else done.toFloat() / tasks.size },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    // Solo se puede completar con todas sus tareas hechas.
+                    val canToggle = current.isCompleted || done == tasks.size
+                    OutlinedButton(
+                        onClick = viewModel::toggleProjectCompleted,
+                        enabled = canToggle,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(
+                                when {
+                                    current.isCompleted -> R.string.reopen_project
+                                    canToggle -> R.string.complete_project
+                                    else -> R.string.complete_project_pending
+                                },
+                            ),
+                        )
+                    }
                 }
             }
             TaskList(

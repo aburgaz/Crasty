@@ -16,6 +16,9 @@ interface ProjectDao {
     )
     fun observeSummaries(completed: Boolean): Flow<List<ProjectSummaryRow>>
 
+    @Query("SELECT id, colorIndex FROM projects")
+    fun observeColors(): Flow<List<ProjectColorRow>>
+
     @Query("SELECT * FROM projects WHERE id = :id")
     fun observeById(id: Long): Flow<ProjectEntity?>
 

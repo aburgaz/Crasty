@@ -5,6 +5,7 @@
     <string name="tab_today">Hoy</string>
     <string name="tab_tomorrow">Mañana</string>
     <string name="calendar">Calendario</string>
+    <string name="tasks_of_day">Tareas del %s</string>
     <string name="completed_tasks">Completadas</string>
     <string name="projects">Proyectos</string>
     <string name="settings">Ajustes</string>
@@ -69,11 +70,15 @@
     <string name="empty_project">Este proyecto no tiene tareas</string>
     <string name="field_project_name">Nombre del proyecto</string>
     <string name="field_deadline">Fecha límite</string>
+    <string name="field_color">Color</string>
     <string name="project_summary">Hasta %1$s · %2$d/%3$d tareas</string>
     <string name="project_deadline">Fecha límite: %s</string>
     <string name="project_progress">%1$d de %2$d tareas completadas</string>
     <string name="complete_project">Marcar proyecto como completado</string>
     <string name="reopen_project">Volver a poner en curso</string>
+    <string name="complete_project_pending">Completa todas las tareas para cerrarlo</string>
+    <string name="task_completed">Tarea completada</string>
+    <string name="undo">Deshacer</string>
     <plurals name="delete_project_confirm">
         <item quantity="one">Se eliminará el proyecto y su tarea.</item>
         <item quantity="other">Se eliminará el proyecto y sus %d tareas.</item>

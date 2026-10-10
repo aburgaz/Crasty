@@ -1,13 +1,13 @@
 package com.crasty.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,15 +18,20 @@ import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
@@ -35,11 +40,17 @@ import com.crasty.app.R
 import com.crasty.app.domain.model.Recurrence
 import com.crasty.app.domain.model.RepeatUnit
 import com.crasty.app.domain.model.Task
-import kotlinx.coroutines.launch
+import com.crasty.app.ui.theme.CardShape
+import com.crasty.app.ui.theme.taskCardColor
+
+private const val FADE_OUT_MILLIS = 400
 
 /**
  * Lista de tareas. Si se pasa [onSwipeRight]/[onSwipeLeft], las tareas normales pendientes
  * se pueden arrastrar en esa dirección (las recurrentes nunca).
+ *
+ * Con [fadeOutOnComplete], al marcar una tarea pendiente se ve marcada y se desvanece,
+ * y solo entonces se llama a [onToggleCompleted] (para listas de las que desaparece al completarse).
  */
 @Composable
 fun TaskList(
@@ -50,6 +61,7 @@ fun TaskList(
     onSwipeRight: ((Task) -> Unit)? = null,
     onSwipeLeft: ((Task) -> Unit)? = null,
     showDate: Boolean = false,
+    fadeOutOnComplete: Boolean = false,
     emptyText: String = stringResource(R.string.empty_day),
 ) {
     if (tasks.isEmpty()) {
@@ -59,84 +71,66 @@ fun TaskList(
         return
     }
     // Hueco al final para que el botón flotante no tape la última tarea.
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         items(tasks, key = { it.id }) { task ->
-            SwipeableTask(
-                task = task,
-                onSwipeRight = onSwipeRight?.takeIf { task.isMovable },
-                onSwipeLeft = onSwipeLeft?.takeIf { task.isMovable },
-            ) {
-                TaskRow(
-                    task = task,
-                    onToggleCompleted = { onToggleCompleted(task) },
-                    onClick = { onClick(task) },
-                    showDate = showDate,
-                )
+            var fading by remember { mutableStateOf(false) }
+            var committed by remember { mutableStateOf(false) }
+            val commit = {
+                if (!committed) {
+                    committed = true
+                    onToggleCompleted(task)
+                }
+            }
+            val alpha by animateFloatAsState(
+                targetValue = if (fading) 0f else 1f,
+                animationSpec = tween(FADE_OUT_MILLIS),
+                finishedListener = { if (fading) commit() },
+                label = "fadeOut",
+            )
+            // Si la fila desaparece a mitad del desvanecimiento (p. ej. al cambiar de pestaña), se completa igualmente.
+            DisposableEffect(Unit) {
+                onDispose { if (fading) commit() }
+            }
+
+            // animateItem: las demás tareas se recolocan suavemente cuando una sale o entra de la lista.
+            Box(Modifier.animateItem(fadeOutSpec = null).alpha(alpha)) {
+                SwipeableCard(
+                    startToEnd = onSwipeRight?.takeIf { task.isMovable && !fading }?.let { onSwipe ->
+                        SwipeAction(stringResource(R.string.tab_tomorrow), Icons.AutoMirrored.Filled.ArrowForward) { onSwipe(task) }
+                    },
+                    endToStart = onSwipeLeft?.takeIf { task.isMovable && !fading }?.let { onSwipe ->
+                        SwipeAction(stringResource(R.string.tab_today), Icons.AutoMirrored.Filled.ArrowBack) { onSwipe(task) }
+                    },
+                ) {
+                    TaskRow(
+                        task = if (fading) task.copy(isCompleted = true) else task,
+                        onToggleCompleted = {
+                            when {
+                                fading -> Unit
+                                fadeOutOnComplete && !task.isCompleted -> fading = true
+                                else -> onToggleCompleted(task)
+                            }
+                        },
+                        onClick = { onClick(task) },
+                        showDate = showDate,
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun SwipeableTask(
-    task: Task,
-    onSwipeRight: ((Task) -> Unit)?,
-    onSwipeLeft: ((Task) -> Unit)?,
-    content: @Composable () -> Unit,
-) {
-    if (onSwipeRight == null && onSwipeLeft == null) {
-        content()
-        return
-    }
-    val state = rememberSwipeToDismissBoxState()
-    val scope = rememberCoroutineScope()
-    SwipeToDismissBox(
-        state = state,
-        enableDismissFromStartToEnd = onSwipeRight != null,
-        enableDismissFromEndToStart = onSwipeLeft != null,
-        onDismiss = { direction ->
-            when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> onSwipeRight?.invoke(task)
-                SwipeToDismissBoxValue.EndToStart -> onSwipeLeft?.invoke(task)
-                SwipeToDismissBoxValue.Settled -> Unit
-            }
-            // Si la tarea se mueve, desaparece de la lista; si no se pudo mover, vuelve a su sitio.
-            scope.launch { state.reset() }
-        },
-        backgroundContent = { SwipeBackground(state.dismissDirection) },
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun SwipeBackground(direction: SwipeToDismissBoxValue) {
-    val (label, alignment, icon) = when (direction) {
-        SwipeToDismissBoxValue.StartToEnd ->
-            Triple(R.string.tab_tomorrow, Alignment.CenterStart, Icons.AutoMirrored.Filled.ArrowForward)
-        SwipeToDismissBoxValue.EndToStart ->
-            Triple(R.string.tab_today, Alignment.CenterEnd, Icons.AutoMirrored.Filled.ArrowBack)
-        SwipeToDismissBoxValue.Settled -> return
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(horizontal = 24.dp),
-        contentAlignment = alignment,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-            Text(stringResource(label), color = MaterialTheme.colorScheme.onSecondaryContainer)
-        }
-    }
-}
-
+/** Tarjeta de una tarea: gris si es normal, del color de su proyecto o beige si es recurrente. */
 @Composable
 fun TaskRow(
     task: Task,
     onToggleCompleted: () -> Unit,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     showDate: Boolean = false,
 ) {
     val details = listOfNotNull(
@@ -144,8 +138,22 @@ fun TaskRow(
         task.reminderTime?.toString(),
         task.recurrence?.let { recurrenceLabel(it) },
     )
+    Surface(
+        onClick = onClick,
+        shape = CardShape,
+        color = taskCardColor(task),
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(if (task.isCompleted) 0.6f else 1f),
+    ) {
+        TaskRowContent(task, details, onToggleCompleted)
+    }
+}
+
+@Composable
+private fun TaskRowContent(task: Task, details: List<String>, onToggleCompleted: () -> Unit) {
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = {
             Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleCompleted() })
         },

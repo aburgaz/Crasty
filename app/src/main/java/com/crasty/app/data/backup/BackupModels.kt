@@ -13,12 +13,13 @@ import java.time.LocalTime
 
 /**
  * Formato del archivo JSON de copia de seguridad. Si cambia, subir [version].
- * v1: solo tareas. v2: proyectos, tareas recurrentes y fecha de completado (los archivos v1 se siguen leyendo).
+ * v1: solo tareas. v2: proyectos, tareas recurrentes y fecha de completado. v3: color de proyecto.
+ * Los archivos de versiones anteriores se siguen leyendo.
  * Las `key` solo sirven para enlazar elementos dentro del archivo.
  */
 @Serializable
 data class BackupFile(
-    val version: Int = 2,
+    val version: Int = 3,
     val exportedAt: String,
     val projects: List<BackupProject> = emptyList(),
     val tasks: List<BackupTask>,
@@ -32,6 +33,7 @@ data class BackupProject(
     val deadline: String,
     val isCompleted: Boolean = false,
     val createdAt: String,
+    val colorIndex: Int = 0,
 )
 
 @Serializable
@@ -75,6 +77,7 @@ fun Project.toBackup() = BackupProject(
     deadline = deadline.toString(),
     isCompleted = isCompleted,
     createdAt = createdAt.toString(),
+    colorIndex = colorIndex,
 )
 
 fun BackupProject.toProject() = Project(
@@ -83,6 +86,7 @@ fun BackupProject.toProject() = Project(
     deadline = LocalDateTime.parse(deadline),
     isCompleted = isCompleted,
     createdAt = Instant.parse(createdAt),
+    colorIndex = colorIndex,
 )
 
 fun Task.toBackup() = BackupTask(

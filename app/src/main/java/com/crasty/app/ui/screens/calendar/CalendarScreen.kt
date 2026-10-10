@@ -2,10 +2,14 @@ package com.crasty.app.ui.screens.calendar
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -21,6 +25,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,6 +34,7 @@ import com.crasty.app.R
 import com.crasty.app.domain.model.Task
 import com.crasty.app.ui.components.DeadlineErrorEffect
 import com.crasty.app.ui.components.TaskList
+import com.crasty.app.ui.components.fullDateFormatter
 import com.crasty.app.ui.components.toUtcMillis
 import com.crasty.app.ui.components.utcMillisToLocalDate
 import java.time.LocalDate
@@ -70,7 +77,26 @@ fun CalendarScreen(
         },
     ) { padding ->
         Column(Modifier.padding(padding)) {
-            DatePicker(state = pickerState, title = null, headline = null, showModeToggle = false)
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shadowElevation = 2.dp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                DatePicker(
+                    state = pickerState,
+                    title = null,
+                    headline = null,
+                    showModeToggle = false,
+                    colors = DatePickerDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+            Text(
+                text = stringResource(R.string.tasks_of_day, selectedDate.format(fullDateFormatter)),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp),
+            )
             TaskList(
                 tasks = tasks,
                 onToggleCompleted = viewModel::toggleCompleted,

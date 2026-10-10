@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icono provisional: un check. Lo cambiaremos al diseñar la interfaz. -->
+<!-- Icono de la app: el cangrejo de ic_crab en crema, centrado en la zona segura del icono adaptativo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FF2F4F43"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M38,55 L49,66 L71,43" />
+    <group
+        android:scaleX="1.15"
+        android:scaleY="1.15"
+        android:translateX="26.4"
+        android:translateY="27.8">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#F6EFE7"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M15.43,13.22 A4.5,4.5 0 1,1 11.78,9.57 M32.57,13.22 A4.5,4.5 0 1,0 36.22,9.57 M15.5,24 L13.25,17.9 M32.5,24 L34.75,17.9 M14,29 L9,32 M16,30.5 L11.5,35 M19,31 L16,36 M34,29 L39,32 M32,30.5 L36.5,35 M29,31 L32,36 M21,23 L20.5,19.5 M27,23 L27.5,19.5" />
+        <path
+            android:fillColor="#F6EFE7"
+            android:pathData="M12,28 C15,21 33,21 36,28 C33,32 15,32 12,28 Z" />
+    </group>
 </vector>

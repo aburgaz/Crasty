@@ -1,5 +1,6 @@
 package com.crasty.app.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -17,7 +18,11 @@ data class ProjectEntity(
     val deadlineMinuteOfDay: Int,
     val isCompleted: Boolean,
     val createdAtMillis: Long,
+    @ColumnInfo(defaultValue = "0") val colorIndex: Int = 0,
 )
+
+/** Id y color de un proyecto. */
+data class ProjectColorRow(val id: Long, val colorIndex: Int)
 
 /** Proyecto con el recuento de sus tareas, para la lista de proyectos. */
 data class ProjectSummaryRow(
@@ -32,6 +37,7 @@ fun ProjectEntity.toProject() = Project(
     deadline = LocalDate.ofEpochDay(deadlineEpochDay).atTime(LocalTime.ofSecondOfDay(deadlineMinuteOfDay * 60L)),
     isCompleted = isCompleted,
     createdAt = Instant.ofEpochMilli(createdAtMillis),
+    colorIndex = colorIndex,
 )
 
 fun Project.toEntity() = ProjectEntity(
@@ -41,6 +47,7 @@ fun Project.toEntity() = ProjectEntity(
     deadlineMinuteOfDay = deadline.hour * 60 + deadline.minute,
     isCompleted = isCompleted,
     createdAtMillis = createdAt.toEpochMilli(),
+    colorIndex = colorIndex,
 )
 
 fun ProjectSummaryRow.toSummary() = ProjectSummary(project.toProject(), totalTasks, doneTasks)

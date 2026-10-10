@@ -8,11 +8,13 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [TaskEntity::class, ProjectEntity::class, RecurringCompletionEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
     autoMigrations = [
         // v2: proyectos, tareas recurrentes y fecha de completado.
         AutoMigration(from = 1, to = 2),
+        // v3: color de los proyectos.
+        AutoMigration(from = 2, to = 3),
     ],
 )
 abstract class CrastyDatabase : RoomDatabase() {

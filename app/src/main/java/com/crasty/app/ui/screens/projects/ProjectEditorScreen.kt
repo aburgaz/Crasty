@@ -1,6 +1,9 @@
 package com.crasty.app.ui.screens.projects
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,8 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AssistChip
@@ -27,15 +34,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crasty.app.R
 import com.crasty.app.ui.components.DatePickerModal
 import com.crasty.app.ui.components.TimePickerModal
 import com.crasty.app.ui.components.fullDateFormatter
+import com.crasty.app.ui.theme.TaskColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +100,8 @@ fun ProjectEditorScreen(
                     leadingIcon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
                 )
             }
+            Text(stringResource(R.string.field_color), style = MaterialTheme.typography.labelLarge)
+            ColorPicker(selected = state.colorIndex, onSelect = viewModel::onColorChange)
             if (state.conflictingTasks > 0) {
                 Text(
                     pluralStringResource(R.plurals.error_deadline_conflicts, state.conflictingTasks, state.conflictingTasks),
@@ -119,5 +132,30 @@ fun ProjectEditorScreen(
             onDismiss = { showTimePicker = false },
             onConfirm = viewModel::onTimeChange,
         )
+    }
+}
+
+/** Círculos con la paleta de colores de proyecto. */
+@Composable
+private fun ColorPicker(selected: Int, onSelect: (Int) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        TaskColors.projects.forEachIndexed { index, color ->
+            val isSelected = index == selected
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(color.resolve())
+                    .border(
+                        width = if (isSelected) 2.dp else 1.dp,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                        shape = CircleShape,
+                    )
+                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(index) }),
+            ) {
+                if (isSelected) Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+            }
+        }
     }
 }

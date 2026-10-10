@@ -20,6 +20,7 @@ data class ProjectEditorState(
     val name: String = "",
     val deadline: LocalDateTime = LocalDate.now().plusWeeks(1).atTime(18, 0),
     val isNew: Boolean = true,
+    val colorIndex: Int = 0,
     /** Tareas pendientes que quedarían después de la nueva fecha límite (0 = sin problema). */
     val conflictingTasks: Int = 0,
 )
@@ -40,7 +41,7 @@ class ProjectEditorViewModel(
             viewModelScope.launch {
                 repository.getProject(projectId)?.let {
                     original = it
-                    state = ProjectEditorState(it.name, it.deadline, isNew = false)
+                    state = ProjectEditorState(it.name, it.deadline, isNew = false, colorIndex = it.colorIndex)
                 }
             }
         }
@@ -48,6 +49,10 @@ class ProjectEditorViewModel(
 
     fun onNameChange(value: String) {
         state = state.copy(name = value)
+    }
+
+    fun onColorChange(value: Int) {
+        state = state.copy(colorIndex = value)
     }
 
     fun onDateChange(value: LocalDate) {
@@ -64,7 +69,9 @@ class ProjectEditorViewModel(
         viewModelScope.launch {
             val base = original ?: Project(name = "", deadline = state.deadline)
             try {
-                val id = repository.saveProject(base.copy(name = state.name.trim(), deadline = state.deadline))
+                val id = repository.saveProject(
+                    base.copy(name = state.name.trim(), deadline = state.deadline, colorIndex = state.colorIndex),
+                )
                 onSaved(id, original == null)
             } catch (e: ProjectDeadlineConflictException) {
                 state = state.copy(conflictingTasks = e.conflictingTasks)

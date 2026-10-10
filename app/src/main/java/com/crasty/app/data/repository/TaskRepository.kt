@@ -124,6 +124,10 @@ class TaskRepository(
     fun observeProjects(completed: Boolean): Flow<List<ProjectSummary>> =
         projectDao.observeSummaries(completed).map { list -> list.map { it.toSummary() } }
 
+    /** Color de cada proyecto (id → posición en la paleta). */
+    fun observeProjectColors(): Flow<Map<Long, Int>> =
+        projectDao.observeColors().map { rows -> rows.associate { it.id to it.colorIndex } }
+
     fun observeProject(id: Long): Flow<Project?> = projectDao.observeById(id).map { it?.toProject() }
 
     suspend fun getProject(id: Long): Project? = projectDao.getById(id)?.toProject()
@@ -140,8 +144,11 @@ class TaskRepository(
         return if (project.id == 0L) insertedId else project.id
     }
 
-    suspend fun setProjectCompleted(project: Project, completed: Boolean) {
+    /** Solo se puede completar un proyecto sin tareas pendientes. Devuelve si se aplicó el cambio. */
+    suspend fun setProjectCompleted(project: Project, completed: Boolean): Boolean {
+        if (completed && taskDao.getByProject(project.id).any { !it.isCompleted }) return false
         projectDao.upsert(project.copy(isCompleted = completed).toEntity())
+        return true
     }
 
     /** Borra el proyecto y todas sus tareas. */

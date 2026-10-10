@@ -44,6 +44,7 @@ class TaskMappingTest {
         id = 3,
         name = "Mudanza",
         deadline = LocalDateTime.of(2026, 11, 1, 18, 0),
+        colorIndex = 4,
         createdAt = Instant.parse("2026-10-01T08:00:00Z"),
     )
 

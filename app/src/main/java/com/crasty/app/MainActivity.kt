@@ -10,12 +10,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crasty.app.data.settings.ThemeMode
 import com.crasty.app.ui.navigation.CrastyNavHost
 import com.crasty.app.ui.theme.CrastyTheme
+import com.crasty.app.ui.theme.LocalProjectColors
 
 class MainActivity : ComponentActivity() {
 
@@ -28,10 +30,13 @@ class MainActivity : ComponentActivity() {
         if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
-        val settings = (application as CrastyApp).container.settingsRepository
+        val container = (application as CrastyApp).container
+        val settings = container.settingsRepository
+        val projectColorsFlow = container.taskRepository.observeProjectColors()
 
         setContent {
             val themeMode by settings.themeMode.collectAsStateWithLifecycle()
+            val projectColors by projectColorsFlow.collectAsStateWithLifecycle(emptyMap())
             val darkTheme = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
@@ -44,7 +49,9 @@ class MainActivity : ComponentActivity() {
                 onDispose { }
             }
             CrastyTheme(darkTheme = darkTheme) {
-                CrastyNavHost()
+                CompositionLocalProvider(LocalProjectColors provides projectColors) {
+                    CrastyNavHost()
+                }
             }
         }
     }

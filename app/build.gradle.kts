@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +7,15 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
 }
+
+// Clave de firma de la versión release: vive fuera del repositorio. local.properties (que no se sube)
+// indica con `crasty.signing=<ruta>` dónde está su keystore.properties (storeFile, storePassword, keyAlias, keyPassword).
+fun loadProperties(file: File): Properties? =
+    file.takeIf { it.exists() }?.let { f -> Properties().apply { f.inputStream().use { load(it) } } }
+
+val releaseSigning: Properties? = loadProperties(rootProject.file("local.properties"))
+    ?.getProperty("crasty.signing")
+    ?.let { loadProperties(file(it)) }
 
 android {
     namespace = "com.crasty.app"
@@ -15,7 +26,18 @@ android {
         minSdk = 31
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
+    }
+
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = file(releaseSigning.getProperty("storeFile"))
+                storePassword = releaseSigning.getProperty("storePassword")
+                keyAlias = releaseSigning.getProperty("keyAlias")
+                keyPassword = releaseSigning.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -26,8 +48,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // App personal: se firma con la clave debug para poder instalarla sin configurar keystore.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sin la clave propia (p. ej. en otro PC) se firma con la de pruebas: ese APK NO podrá actualizar
+            // la app instalada con la clave propia.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug").also {
+                logger.warn("Crasty: no se encontró la clave de firma propia; la release se firma con la clave de pruebas.")
+            }
         }
     }
 

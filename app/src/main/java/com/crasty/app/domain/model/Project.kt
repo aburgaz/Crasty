@@ -9,6 +9,8 @@ data class Project(
     val name: String,
     val deadline: LocalDateTime,
     val isCompleted: Boolean = false,
+    /** Posición en la paleta de colores de proyecto. */
+    val colorIndex: Int = 0,
     val createdAt: Instant = Instant.now(),
 )
 

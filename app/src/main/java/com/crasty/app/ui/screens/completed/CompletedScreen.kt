@@ -105,6 +105,7 @@ fun CompletedScreen(
                                 task = task,
                                 onToggleCompleted = { viewModel.restore(task) },
                                 onClick = { onOpenTask(task) },
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                             )
                         }
                     }

@@ -1,10 +1,12 @@
 package com.crasty.app.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -19,18 +21,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Tab
+import androidx.compose.material3.SnackbarResult
+import com.crasty.app.ui.components.CrastyTab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +46,7 @@ import com.crasty.app.R
 import com.crasty.app.domain.model.Task
 import com.crasty.app.ui.components.DeadlineErrorEffect
 import com.crasty.app.ui.components.TaskList
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 private const val TAB_TODAY = 0
@@ -61,13 +69,22 @@ fun HomeScreen(
     val today by viewModel.today.collectAsStateWithLifecycle()
     val tomorrow by viewModel.tomorrow.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val completedMessage = stringResource(R.string.task_completed)
+    val undoLabel = stringResource(R.string.undo)
     DeadlineErrorEffect(viewModel, snackbarHostState)
 
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.app_name)) },
+                    title = {
+                        Image(
+                            painter = painterResource(R.drawable.ic_crab),
+                            contentDescription = stringResource(R.string.app_name),
+                            modifier = Modifier.size(44.dp),
+                        )
+                    },
                     actions = {
                         IconButton(onClick = onOpenProjects) {
                             Icon(Icons.Outlined.Folder, contentDescription = stringResource(R.string.projects))
@@ -84,8 +101,8 @@ fun HomeScreen(
                     },
                 )
                 PrimaryTabRow(selectedTabIndex = tab) {
-                    Tab(selected = tab == TAB_TODAY, onClick = { tab = TAB_TODAY }, text = { Text(stringResource(R.string.tab_today)) })
-                    Tab(selected = tab == TAB_TOMORROW, onClick = { tab = TAB_TOMORROW }, text = { Text(stringResource(R.string.tab_tomorrow)) })
+                    CrastyTab(selected = tab == TAB_TODAY, onClick = { tab = TAB_TODAY }, text = stringResource(R.string.tab_today))
+                    CrastyTab(selected = tab == TAB_TOMORROW, onClick = { tab = TAB_TOMORROW }, text = stringResource(R.string.tab_tomorrow))
                 }
             }
         },
@@ -108,13 +125,32 @@ fun HomeScreen(
             }
         },
     ) { padding ->
-        TaskList(
-            tasks = if (tab == TAB_TODAY) today else tomorrow,
-            onToggleCompleted = viewModel::toggleCompleted,
-            onClick = onOpenTask,
-            onSwipeRight = if (tab == TAB_TODAY) { task -> viewModel.moveTo(task, viewModel.tomorrowDate) } else null,
-            onSwipeLeft = if (tab == TAB_TOMORROW) { task -> viewModel.moveTo(task, viewModel.todayDate) } else null,
-            modifier = Modifier.padding(padding),
-        )
+        // Una lista distinta por pestaña: si no, una tarea recién movida a la otra pestaña reutilizaría
+        // la fila (y su estado de deslizamiento a medias) y Compose fallaría.
+        key(tab) {
+            TaskList(
+                tasks = if (tab == TAB_TODAY) today else tomorrow,
+                // Aquí solo hay pendientes: marcar = completar, y la tarea se desvanece (con opción de deshacer).
+                fadeOutOnComplete = true,
+                onToggleCompleted = { task ->
+                    viewModel.toggleCompleted(task)
+                    scope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        val result = snackbarHostState.showSnackbar(
+                            message = completedMessage,
+                            actionLabel = undoLabel,
+                            duration = SnackbarDuration.Short,
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            viewModel.toggleCompleted(task.copy(isCompleted = true))
+                        }
+                    }
+                },
+                onClick = onOpenTask,
+                onSwipeRight = if (tab == TAB_TODAY) { task -> viewModel.moveTo(task, viewModel.tomorrowDate) } else null,
+                onSwipeLeft = if (tab == TAB_TOMORROW) { task -> viewModel.moveTo(task, viewModel.todayDate) } else null,
+                modifier = Modifier.padding(padding),
+            )
+        }
     }
 }
